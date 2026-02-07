@@ -1,12 +1,13 @@
 import puppeteer from "puppeteer";
 import fs from "fs";
 import { Parser } from "json2csv";
-import chalk from "chalk";
-import boxen from "boxen";
+import { logError, logSuccess } from "./logger.js";
 
-try {
-  (async () => {
-    const browser = await puppeteer.launch({
+const run = async () => {
+  let browser;
+
+  try {
+    browser = await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox"],
     });
@@ -46,30 +47,14 @@ try {
 
     fs.writeFileSync("crypto-rsi.csv", csv);
 
-    const message =
-      chalk.green.bold("✅ SCRAPE COMPLETE\n") +
-      chalk.white("Data saved to ") +
-      chalk.cyan.bold("crypto-rsi.csv");
+    logSuccess("SCRAPE COMPLETE", "crypto-rsi.csv");
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+};
 
-    console.log(
-      boxen(message, {
-        padding: 1,
-        borderStyle: "round",
-        borderColor: "green",
-      }),
-    );
-
-    await browser.close();
-  })();
-} catch (error) {
-  const message =
-    chalk.red.bold("❌ SCRAPE FAILED\n") + chalk.red(error.message);
-
-  console.log(
-    boxen(message, {
-      padding: 1,
-      borderStyle: "round",
-      borderColor: "red",
-    }),
-  );
-}
+run().catch((error) => {
+  logError("SCRAPE FAILED", error);
+});
